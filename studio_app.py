@@ -160,7 +160,7 @@ def voice_choices():
 LANG_MAP = {"English": "English", "Tiếng Việt": "Vietnamese", "Tự động": None}
 
 MODEL_STEPS = {
-    "Eleven v4 (Turbo)": {"steps": 14, "cfg": 1.95, "pos": 0.85},
+    "Eleven v4 (Turbo)": {"steps": 18, "cfg": 1.95, "pos": 0.85},
     "Eleven v3 (Biểu cảm)": {"steps": 18, "cfg": 2.00, "pos": 0.95},
     "Eleven Multilingual v2 (Chuẩn)": {"steps": 22, "cfg": 1.90, "pos": 0.80},
 }
@@ -295,8 +295,42 @@ def num_to_words(n):
 def normalize_script(text, lang="English"):
     if not text:
         return ""
-    if lang == "Tiếng Việt" or any(c in "àáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ" for c in text.lower()):
-        return text.strip()
+    is_vi = lang == "Tiếng Việt" or any(c in "àáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ" for c in text.lower())
+    if is_vi:
+        t = text.strip()
+        vi_abbrs = [
+            (r'\bđc\b', 'được'),
+            (r'\bko\b', 'không'),
+            (r'\bk\b', 'không'),
+            (r'\bvs\b', 'với'),
+            (r'\bj\b', 'gì'),
+            (r'\bsp\b', 'sản phẩm'),
+            (r'\bnv\b', 'nhân viên'),
+            (r'\bmk\b', 'mình'),
+            (r'\btks\b', 'cảm ơn'),
+            (r'\btk\b', 'cảm ơn'),
+            (r'\ba/c\b', 'anh chị'),
+            (r'\bac\b', 'anh chị'),
+            (r'\bkh\b', 'khách hàng'),
+            (r'\bib\b', 'nhắn tin'),
+            (r'\bPET\b', 'P-E-T'),
+            (r'\bpet\b', 'P-E-T'),
+            (r'\bpp\b', 'P-P'),
+            (r'\bPP\b', 'P-P'),
+            (r'\bkg\b', 'ki-lô-gam'),
+            (r'\bml\b', 'mi-li-lít'),
+            (r'\bcm\b', 'xen-ti-mét'),
+            (r'\bmm\b', 'mi-li-mét'),
+            (r'\bvnđ\b', 'đồng'),
+            (r'\bvnd\b', 'đồng'),
+            (r'\bđ\b', 'đồng'),
+            (r'(\d+)k\b', r'\1 nghìn'),
+            (r'(\d+)%', r'\1 phần trăm'),
+        ]
+        for pat, rep in vi_abbrs:
+            t = re.sub(pat, rep, t, flags=re.IGNORECASE)
+        t = re.sub(r'[ \t]+', ' ', t)
+        return t
 
     def _rep_time(m):
         h = int(m.group(1))
