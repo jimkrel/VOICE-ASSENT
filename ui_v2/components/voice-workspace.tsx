@@ -151,7 +151,10 @@ export function VoiceWorkspace({
               {activeTool === "text-to-speech" ? (
                 <TextToSpeechWorkspace
                   selectedVoiceId={selectedVoiceId}
+                  onSelectVoice={setSelectedVoiceId}
+                  voices={voices}
                   settings={settings}
+                  onChangeSettings={setSettings}
                   onGenerated={fetchHistory}
                 />
               ) : null}

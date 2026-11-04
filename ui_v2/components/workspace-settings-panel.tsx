@@ -266,8 +266,68 @@ function SettingsContent({
     setVisibleEffects(["Distance", "Space"])
   }
 
+  const isKokoroActive = (settings.engine === "kokoro") || selectedVoice.engine === "kokoro" || selectedVoice.id.startsWith("af_") || selectedVoice.id.startsWith("am_") || selectedVoice.id.startsWith("bf_") || selectedVoice.id.startsWith("bm_")
+
   return (
     <div className="flex flex-col gap-5 pb-5 pt-4">
+      {/* AI ENGINE SELECTOR */}
+      <section aria-label="Mô hình AI" className="flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <label className="text-[12px] font-semibold text-foreground">
+            Mô hình AI (Engine)
+          </label>
+          <span className="rounded-md bg-primary/10 px-1.5 py-0.5 text-[9px] font-semibold text-primary">
+            GTX 1650 CUDA
+          </span>
+        </div>
+        <div className="grid grid-cols-2 gap-2 rounded-xl border border-border bg-muted/40 p-1">
+          <button
+            type="button"
+            onClick={() => {
+              onChangeSettings({ ...settings, engine: "omnivoice" })
+              if (selectedVoice.engine === "kokoro" || selectedVoice.id.startsWith("af_") || selectedVoice.id.startsWith("am_") || selectedVoice.id.startsWith("bf_") || selectedVoice.id.startsWith("bm_")) {
+                onSelectVoice("minh-anh")
+              }
+            }}
+            className={cn(
+              "flex flex-col items-start gap-0.5 rounded-lg p-2 text-left transition-all",
+              !isKokoroActive
+                ? "bg-card shadow-xs border border-border/80 text-foreground"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
+            )}
+          >
+            <div className="flex items-center gap-1.5 w-full">
+              <span className={cn("size-2 rounded-full", !isKokoroActive ? "bg-emerald-500" : "bg-muted-foreground/40")} />
+              <span className="text-[11px] font-bold">OmniVoice FP16</span>
+            </div>
+            <span className="text-[9.5px] text-muted-foreground line-clamp-1">Đa ngôn ngữ & Tiếng Việt</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              onChangeSettings({ ...settings, engine: "kokoro" })
+              if (selectedVoice.id === "minh-anh" || selectedVoice.id === "bao-ngoc" || selectedVoice.id === "gia-huy") {
+                onSelectVoice("af_heart")
+              }
+            }}
+            className={cn(
+              "flex flex-col items-start gap-0.5 rounded-lg p-2 text-left transition-all",
+              isKokoroActive
+                ? "bg-card shadow-xs border border-border/80 text-foreground"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
+            )}
+          >
+            <div className="flex items-center gap-1.5 w-full">
+              <span className={cn("size-2 rounded-full", isKokoroActive ? "bg-cyan-500" : "bg-muted-foreground/40")} />
+              <span className="text-[11px] font-bold">Kokoro-82M</span>
+            </div>
+            <span className="text-[9.5px] text-muted-foreground line-clamp-1">Siêu tốc 0.5s & US/UK Hi-Fi</span>
+          </button>
+        </div>
+      </section>
+
+      {/* VOICE SELECTOR */}
       <section aria-label="Chọn giọng đọc" className="flex flex-col gap-2.5">
         <label htmlFor="settings-voice" className="text-[12px] font-semibold text-foreground">
           Giọng đọc
@@ -276,12 +336,32 @@ function SettingsContent({
           <select
             id="settings-voice"
             value={selectedVoice.id}
-            onChange={(event) => onSelectVoice(event.target.value)}
+            onChange={(event) => {
+              const vid = event.target.value
+              onSelectVoice(vid)
+              const v = voices.find((item) => item.id === vid)
+              if (v?.engine === "kokoro" || vid.startsWith("af_") || vid.startsWith("am_") || vid.startsWith("bf_") || vid.startsWith("bm_")) {
+                onChangeSettings({ ...settings, engine: "kokoro" })
+              } else if (v?.engine === "omnivoice" || vid === "minh-anh" || vid === "bao-ngoc" || vid === "gia-huy") {
+                onChangeSettings({ ...settings, engine: "omnivoice" })
+              }
+            }}
             className="h-10 w-full appearance-none rounded-xl border border-border bg-card pl-3 pr-9 text-[11px] text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
           >
-            {voices.map((voice) => (
-              <option key={voice.id} value={voice.id}>{`${voice.name} — ${voice.style}`}</option>
-            ))}
+            <optgroup label="⚡ Kokoro-82M (Siêu tốc 0.5s · US/UK Hi-Fi)">
+              {voices
+                .filter((v) => v.engine === "kokoro" || v.id.startsWith("af_") || v.id.startsWith("am_") || v.id.startsWith("bf_") || v.id.startsWith("bm_"))
+                .map((voice) => (
+                  <option key={voice.id} value={voice.id}>{`${voice.name} — ${voice.style}`}</option>
+                ))}
+            </optgroup>
+            <optgroup label="🇻🇳 OmniVoice (Đa ngôn ngữ & Tiếng Việt)">
+              {voices
+                .filter((v) => !(v.engine === "kokoro" || v.id.startsWith("af_") || v.id.startsWith("am_") || v.id.startsWith("bf_") || v.id.startsWith("bm_")))
+                .map((voice) => (
+                  <option key={voice.id} value={voice.id}>{`${voice.name} — ${voice.style}`}</option>
+                ))}
+            </optgroup>
           </select>
           <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
         </span>
@@ -299,9 +379,19 @@ function SettingsContent({
             </span>
           </button>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[11px] font-semibold text-foreground">
-              {selectedVoice.name} · {selectedVoice.locale} · {selectedVoice.gender}
-            </p>
+            <div className="flex items-center gap-1.5">
+              <p className="truncate text-[11px] font-semibold text-foreground">
+                {selectedVoice.name} · {selectedVoice.locale} · {selectedVoice.gender}
+              </p>
+              <span className={cn(
+                "rounded px-1.5 py-0.5 text-[9px] font-semibold",
+                isKokoroActive
+                  ? "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400"
+                  : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+              )}>
+                {isKokoroActive ? "Kokoro-82M" : "OmniVoice"}
+              </span>
+            </div>
             <p className="mt-0.5 truncate text-[10px] text-muted-foreground">{selectedVoice.description}</p>
             <p className="mt-1 text-[10px] text-muted-foreground">
               {activeTool === "voice-changer" ? "Giọng đích cho tệp âm thanh" : "Giọng dùng cho kịch bản"}

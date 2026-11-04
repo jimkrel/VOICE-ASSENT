@@ -17,13 +17,14 @@ import numpy as np
 import torch
 import soundfile as sf
 import studio_app as core
+import kokoro_engine
 
 # Warm up psutil CPU counter
 psutil.cpu_percent(interval=None)
 
 STUDIO_TELEMETRY = {
     "status": "ready",
-    "taskName": "OmniVoice FP16 Studio Engine",
+    "taskName": "OmniVoice FP16 + Kokoro-82M Dual Engine",
     "voiceName": "Hope",
     "progress": 0,
     "stage": "Sẵn sàng xử lý trên CUDA",
@@ -34,7 +35,7 @@ STUDIO_TELEMETRY = {
     "filename": None,
     "waveform": [],
     "logs": [
-        {"time": "00:00.0", "message": "Đã nạp OmniVoice FP16 trên NVIDIA GeForce GTX 1650 (CUDA:0)"},
+        {"time": "00:00.0", "message": "Đã nạp OmniVoice FP16 & Kokoro-82M trên NVIDIA GeForce GTX 1650 (CUDA:0)"},
         {"time": "00:00.1", "message": "Bộ lọc Studio Mastering (-14 LUFS) & Spatial DSP sẵn sàng"},
     ],
 }
@@ -174,6 +175,7 @@ TONES = ["aqua", "blue", "violet", "coral", "green"]
 BASE_CATALOG = [
     {
         "id": "hope",
+        "engine": "omnivoice",
         "name": "Hope",
         "style": "upbeat and clear",
         "locale": "US",
@@ -183,11 +185,13 @@ BASE_CATALOG = [
         "sampleText": "Deep inside the Black Forest, investigators discovered an abandoned radio tower broadcasting an unbroken seven-digit code.",
         "categories": ["US English", "Nữ (Female)"],
         "source": "Mẫu Studio",
+                    "engine": "omnivoice",
         "tone": "aqua",
         "audioPath": os.path.join(core.PRESET_DIR, "eleven_hope.wav"),
     },
     {
         "id": "marcus",
+        "engine": "omnivoice",
         "name": "Marcus",
         "style": "documentary and crime",
         "locale": "US",
@@ -202,6 +206,7 @@ BASE_CATALOG = [
     },
     {
         "id": "liam",
+        "engine": "omnivoice",
         "name": "Liam",
         "style": "storyteller and essay",
         "locale": "UK",
@@ -216,6 +221,7 @@ BASE_CATALOG = [
     },
     {
         "id": "alex",
+        "engine": "omnivoice",
         "name": "Alex",
         "style": "movie recap and shorts",
         "locale": "US",
@@ -230,6 +236,7 @@ BASE_CATALOG = [
     },
     {
         "id": "minh-anh",
+        "engine": "omnivoice",
         "name": "Minh Anh",
         "style": "ấm áp và rõ ràng",
         "locale": "Việt Nam",
@@ -244,6 +251,7 @@ BASE_CATALOG = [
     },
     {
         "id": "bao-ngoc",
+        "engine": "omnivoice",
         "name": "Bảo Ngọc",
         "style": "trẻ trung và tươi sáng",
         "locale": "Việt Nam",
@@ -253,11 +261,13 @@ BASE_CATALOG = [
         "sampleText": "Chào bạn, đây là giọng đọc nữ nhẹ nhàng, tự nhiên và tràn đầy cảm xúc.",
         "categories": ["Tiếng Việt", "Nữ (Female)"],
         "source": "Giọng tự tạo",
+            "engine": "omnivoice",
         "tone": "coral",
         "audioPath": os.path.join(core.PRESET_DIR, "voice_vi_female.mp3"),
     },
     {
         "id": "gia-huy",
+        "engine": "omnivoice",
         "name": "Gia Huy",
         "style": "nam ấm áp, truyền cảm",
         "locale": "Việt Nam",
@@ -309,6 +319,7 @@ def get_full_catalog():
                     "sampleText": meta.get("text", ""),
                     "categories": cats,
                     "source": "Mẫu Studio",
+                    "engine": "omnivoice",
                     "tone": TONES[idx % len(TONES)],
                     "audioPath": meta.get("audio", ""),
                 })
@@ -333,9 +344,16 @@ def get_full_catalog():
             "sampleText": cmeta.get("text", "Xin chào, đây là giọng đọc mới được tạo."),
             "categories": ["Giọng tự tạo", "Tiếng Việt"],
             "source": "Giọng tự tạo",
+            "engine": "omnivoice",
             "tone": TONES[(idx + 2) % len(TONES)],
             "audioPath": cmeta.get("audio", ""),
         })
+
+    # Add Kokoro-82M voices
+    for kv in kokoro_engine.KOKORO_VOICES:
+        if kv["id"] not in seen_ids:
+            seen_ids.add(kv["id"])
+            items.append(dict(kv))
 
     return items
 
@@ -362,6 +380,17 @@ def api_list_voices():
 @app.get("/api/voices/{voice_id}/preview")
 def api_voice_preview(voice_id: str):
     v = resolve_voice(voice_id)
+    if v.get("engine") == "kokoro" or kokoro_engine.is_kokoro_voice(voice_id):
+        preview_file = os.path.join(core.PRESET_DIR, f"kokoro_{v['id']}.wav")
+        if not os.path.exists(preview_file):
+            try:
+                audio, sr = kokoro_engine.generate_kokoro(v.get("sampleText", "Kokoro-82M neural voice preview."), voice=v["id"])
+                audio = core.master_audio(audio, sr=sr)
+                sf.write(preview_file, audio, sr)
+            except Exception as e:
+                print(f"Preview generate error for {v['id']}: {e}")
+        if os.path.exists(preview_file):
+            return FileResponse(preview_file)
     path = v.get("audioPath", "")
     if not path or not os.path.exists(path):
         raise HTTPException(status_code=404, detail="Không tìm thấy tệp âm thanh mẫu.")
@@ -371,6 +400,7 @@ def api_voice_preview(voice_id: str):
 class TTSRequest(BaseModel):
     text: str
     voiceId: str = "minh-anh"
+    engine: Optional[str] = "auto"
     speed: float = 0.95
     stability: float = 45.0
     similarity: float = 75.0
@@ -406,17 +436,86 @@ def api_tts(req: TTSRequest):
     if target_lang == "Tự động":
         target_lang = "Tiếng Việt" if is_vietnamese_text else "English"
 
-    # Nếu kịch bản là Tiếng Việt mà giọng đang chọn là hope (mặc định ban đầu tiếng Anh), tự động ưu tiên giọng Việt Minh Anh
     req_voice = req.voiceId
-    if (not req_voice or req_voice == "hope") and is_vietnamese_text:
+    chosen_engine = (req.engine or "auto").lower()
+
+    # Nếu kịch bản là Tiếng Việt mà người dùng không yêu cầu Kokoro, tự động ưu tiên giọng Việt Minh Anh
+    if (not req_voice or req_voice == "hope") and is_vietnamese_text and chosen_engine != "kokoro":
         req_voice = "minh-anh"
 
     v = resolve_voice(req_voice)
+    is_kokoro = (chosen_engine == "kokoro") or (chosen_engine == "auto" and (v.get("engine") == "kokoro" or kokoro_engine.is_kokoro_voice(req_voice)))
+
+    fx_dist = DISTANCE_MAP.get(req.distance or "Medium", "Medium")
+    fx_env = SPACE_MAP.get(req.space or "Studio (Dry)", "Studio (Dry)")
+
+    if is_kokoro:
+        # -------------------------------------------------------------
+        # KOKORO-82M INFERENCE PATH (High-Fidelity, Ultra-Fast ~0.5s)
+        # -------------------------------------------------------------
+        kokoro_vid = kokoro_engine.resolve_kokoro_voice(req_voice)
+        v = kokoro_engine.KOKORO_VOICE_MAP.get(kokoro_vid, v or {"name": kokoro_vid, "id": kokoro_vid})
+        begin_studio_job("Đọc kịch bản (Kokoro-82M)", v["name"])
+        log_studio_step(15, "Khởi động Kokoro-82M StyleTTS2", f"Giọng: {v['name']} ({v['id']}) · Tốc độ: {req.speed}x")
+
+        t0 = time.time()
+        sr = 24000
+
+        def on_chunk(idx, graph):
+            pct = min(85, 20 + idx * 15)
+            log_studio_step(pct, f"Xử lý nơ-ron câu {idx}", f"Đoạn {idx}: {graph[:36]}...")
+
+        full_audio, sr = kokoro_engine.generate_kokoro(
+            text=text,
+            voice=v["id"],
+            speed=req.speed,
+            callback=on_chunk,
+        )
+
+        log_studio_step(88, "Mastering -14 LUFS & Spatial DSP", f"Xử lý EQ 5-band · Khoảng cách: {req.distance} · Không gian: {req.space}")
+        if req.lufs:
+            full_audio = core.master_audio(full_audio, sr=sr)
+
+        full_audio = core.apply_audio_effects(full_audio, sr=sr, distance=fx_dist, env_filter=fx_env)
+
+        out_path = core.save_output(full_audio, "tts")
+        fname = os.path.basename(out_path)
+        dur = float(len(full_audio) / sr)
+        elapsed = float(time.time() - t0)
+        audio_url = f"/outputs/{fname}"
+        bars = finish_studio_job(
+            full_audio,
+            sr,
+            audio_url,
+            fname,
+            f"Hoàn tất {fname} · Thời lượng {dur:.2f}s (xử lý {elapsed:.2f}s) qua Kokoro-82M",
+        )
+
+        return {
+            "audioUrl": audio_url,
+            "filename": fname,
+            "voiceName": v["name"],
+            "engine": "Kokoro-82M",
+            "duration": round(dur, 2),
+            "elapsed": round(elapsed, 2),
+            "chunks": 1,
+            "steps": 1,
+            "emotions": ["neural"],
+            "distance": req.distance or "Vừa",
+            "space": req.space or "Phòng thu khô",
+            "createdAt": datetime.datetime.now().strftime("%H:%M:%S"),
+            "waveform": bars,
+            "logs": STUDIO_TELEMETRY["logs"],
+        }
+
+    # -------------------------------------------------------------
+    # OMNIVOICE FP16 INFERENCE PATH (Multilingual & Tiếng Việt)
+    # -------------------------------------------------------------
     audio_path = v.get("audioPath", "")
     if not audio_path or not os.path.exists(audio_path):
         raise HTTPException(status_code=404, detail="Không tìm thấy tệp giọng mẫu đã chọn.")
 
-    begin_studio_job("Đọc kịch bản (TTS)", v["name"])
+    begin_studio_job("Đọc kịch bản (OmniVoice)", v["name"])
     stab = float(req.stability) / 100.0 if req.stability > 1.0 else float(req.stability)
     sim = float(req.similarity) / 100.0 if req.similarity > 1.0 else float(req.similarity)
     sty = float(req.style) / 100.0 if req.style > 1.0 else float(req.style)
@@ -506,6 +605,7 @@ def api_tts(req: TTSRequest):
         "audioUrl": audio_url,
         "filename": fname,
         "voiceName": v["name"],
+        "engine": "OmniVoice FP16",
         "duration": round(dur, 2),
         "elapsed": round(elapsed, 2),
         "chunks": len(chunks),
@@ -795,6 +895,7 @@ async def api_voice_changer(
         "audioUrl": audio_url,
         "filename": fname,
         "voiceName": v["name"],
+        "engine": "OmniVoice FP16",
         "duration": round(dur, 2),
         "elapsed": round(elapsed, 2),
         "waveform": bars,

@@ -46,6 +46,7 @@ const emotionOptions: { label: string; tag: string; icon: LucideIcon }[] = [
 
 type TTSResult = {
   audioUrl: string
+  engine?: string
   filename: string
   voiceName: string
   duration: number
@@ -98,8 +99,14 @@ export function TextToSpeechWorkspace({
 
   const isVietnameseText = useMemo(() => VI_CHAR_REGEX.test(text), [text])
 
-  // Suggested popular voices
+  // Suggested popular voices based on selected AI engine
   const quickVoices = useMemo(() => {
+    if (settings.engine === "kokoro") {
+      const kokoroList = activeCatalog.filter(
+        (v) => v.engine === "kokoro" || v.id.startsWith("af_") || v.id.startsWith("am_") || v.id.startsWith("bf_") || v.id.startsWith("bm_")
+      )
+      return kokoroList.slice(0, 5)
+    }
     const viList = activeCatalog.filter(
       (v) =>
         v.language?.toLowerCase().includes("việt") ||
@@ -107,11 +114,11 @@ export function TextToSpeechWorkspace({
     )
     const enList = activeCatalog.filter(
       (v) =>
-        v.language?.toLowerCase().includes("english") ||
-        v.categories?.some((c) => c.toLowerCase().includes("english"))
+        !(v.engine === "kokoro" || v.id.startsWith("af_") || v.id.startsWith("am_") || v.id.startsWith("bf_") || v.id.startsWith("bm_")) &&
+        (v.language?.toLowerCase().includes("english") || v.categories?.some((c) => c.toLowerCase().includes("english")))
     )
     return [...viList.slice(0, 3), ...enList.slice(0, 2)]
-  }, [activeCatalog])
+  }, [activeCatalog, settings.engine])
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -166,6 +173,12 @@ export function TextToSpeechWorkspace({
   function handleSelectVoice(vId: string) {
     onSelectVoice?.(vId)
     setVoiceDropdownOpen(false)
+    const v = activeCatalog.find((item) => item.id === vId)
+    if (v?.engine === "kokoro" || vId.startsWith("af_") || vId.startsWith("am_") || vId.startsWith("bf_") || vId.startsWith("bm_")) {
+      onChangeSettings?.({ ...settings, engine: "kokoro" })
+    } else if (v?.engine === "omnivoice" || vId === "minh-anh" || vId === "bao-ngoc" || vId === "gia-huy") {
+      onChangeSettings?.({ ...settings, engine: "omnivoice" })
+    }
   }
 
   function insertTag(tag: string) {
@@ -216,7 +229,7 @@ export function TextToSpeechWorkspace({
     const timer = setInterval(() => {
       const elapsedSec = ((Date.now() - startTime) / 1000).toFixed(1)
       setProgressPct((prev) => Math.min(92, Math.round(prev + (92 - prev) * 0.12)))
-      setNotice(`Đang tổng hợp trên GPU GTX 1650 (${elapsedSec}s)...`)
+      setNotice(settings.engine === "kokoro" ? `Đang tổng hợp siêu tốc trên Kokoro-82M (${elapsedSec}s)...` : `Đang tổng hợp trên OmniVoice FP16 (${elapsedSec}s)...`)
     }, 400)
 
     try {
@@ -238,7 +251,7 @@ export function TextToSpeechWorkspace({
       setProgressPct(100)
       setResult(data)
       setNotice(
-        `Đã tạo giọng thành công (${data.voiceName}) · ${data.duration}s âm thanh trong ${data.elapsed}s · ${data.chunks} phân đoạn`
+        `Đã tạo giọng thành công (${data.voiceName}) [${data.engine || (settings.engine === "kokoro" ? "Kokoro-82M" : "OmniVoice FP16")}] · ${data.duration}s âm thanh trong ${data.elapsed}s`
       )
       setCountdown(10)
       onGenerated?.()
@@ -271,6 +284,7 @@ export function TextToSpeechWorkspace({
 
   const badges = result
     ? [
+        `Mô hình: ${result.engine || (settings.engine === "kokoro" ? "Kokoro-82M" : "OmniVoice FP16")}`,
         `Giọng: ${result.voiceName}`,
         `Khoảng cách: ${result.distance}`,
         `Không gian: ${result.space}`,
@@ -287,7 +301,7 @@ export function TextToSpeechWorkspace({
             Biến kịch bản thành giọng đọc
           </h2>
           <p className="mt-1 max-w-[640px] text-[12px] leading-5 text-muted-foreground">
-            Dán nội dung, chọn giọng đọc tiếng Việt hoặc tiếng Anh và xuất âm thanh studio 24 kHz trên GPU nội bộ OmniVoice FP16.
+            Dán nội dung, chọn giọng đọc tiếng Việt hoặc tiếng Anh và xuất âm thanh studio 24 kHz trên GPU nội bộ OmniVoice FP16 & Kokoro-82M.
           </p>
         </header>
 
@@ -324,15 +338,19 @@ export function TextToSpeechWorkspace({
 
               {/* Dropdown Menu */}
               {voiceDropdownOpen ? (
-                <div className="absolute left-0 top-full z-50 mt-1 max-h-[320px] w-[280px] overflow-y-auto rounded-xl border border-border bg-card p-1.5 shadow-xl sm:w-[320px]">
-                  <div className="px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Giọng Tiếng Việt Khuyến Nghị
+                <div className="absolute left-0 top-full z-50 mt-1 max-h-[340px] w-[290px] overflow-y-auto rounded-xl border border-border bg-card p-1.5 shadow-xl sm:w-[330px]">
+                  {/* Kokoro Voices */}
+                  <div className="flex items-center justify-between px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-cyan-600 dark:text-cyan-400">
+                    <span>⚡ Kokoro-82M (Siêu tốc 0.5s · US/UK Hi-Fi)</span>
                   </div>
                   {activeCatalog
                     .filter(
                       (v) =>
-                        v.language?.toLowerCase().includes("việt") ||
-                        v.categories?.some((c) => c.toLowerCase().includes("việt"))
+                        v.engine === "kokoro" ||
+                        v.id.startsWith("af_") ||
+                        v.id.startsWith("am_") ||
+                        v.id.startsWith("bf_") ||
+                        v.id.startsWith("bm_")
                     )
                     .map((voice) => {
                       const isSelected = voice.id === selectedVoiceId
@@ -342,9 +360,45 @@ export function TextToSpeechWorkspace({
                           type="button"
                           onClick={() => handleSelectVoice(voice.id)}
                           className={cn(
-                            "flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left transition-colors",
+                            "flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left transition-colors",
                             isSelected
-                              ? "bg-primary/10 font-medium text-primary"
+                              ? "bg-cyan-500/10 font-medium text-cyan-700 dark:text-cyan-300"
+                              : "text-foreground hover:bg-muted/60"
+                          )}
+                        >
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[12px] font-semibold">{voice.name}</span>
+                              <span className="text-[10px] text-muted-foreground">({voice.locale || "US"} · {voice.gender})</span>
+                            </div>
+                            <p className="truncate text-[10px] text-muted-foreground">{voice.description}</p>
+                          </div>
+                          {isSelected ? <Check className="size-4 shrink-0 text-cyan-500" /> : null}
+                        </button>
+                      )
+                    })}
+
+                  {/* Vietnamese OmniVoice */}
+                  <div className="mt-2 border-t border-border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                    🇻🇳 Tiếng Việt (OmniVoice FP16)
+                  </div>
+                  {activeCatalog
+                    .filter(
+                      (v) =>
+                        !(v.engine === "kokoro" || v.id.startsWith("af_") || v.id.startsWith("am_") || v.id.startsWith("bf_") || v.id.startsWith("bm_")) &&
+                        (v.language?.toLowerCase().includes("việt") || v.categories?.some((c) => c.toLowerCase().includes("việt")))
+                    )
+                    .map((voice) => {
+                      const isSelected = voice.id === selectedVoiceId
+                      return (
+                        <button
+                          key={voice.id}
+                          type="button"
+                          onClick={() => handleSelectVoice(voice.id)}
+                          className={cn(
+                            "flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left transition-colors",
+                            isSelected
+                              ? "bg-emerald-500/10 font-medium text-emerald-700 dark:text-emerald-300"
                               : "text-foreground hover:bg-muted/60"
                           )}
                         >
@@ -355,21 +409,22 @@ export function TextToSpeechWorkspace({
                             </div>
                             <p className="truncate text-[10px] text-muted-foreground">{voice.description}</p>
                           </div>
-                          {isSelected ? <Check className="size-4 shrink-0 text-primary" /> : null}
+                          {isSelected ? <Check className="size-4 shrink-0 text-emerald-500" /> : null}
                         </button>
                       )
                     })}
 
-                  <div className="mt-2 border-t border-border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Giọng Quốc Tế (English)
+                  {/* International Studio OmniVoice */}
+                  <div className="mt-2 border-t border-border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                    🎙️ Mẫu Studio (OmniVoice FP16)
                   </div>
                   {activeCatalog
                     .filter(
                       (v) =>
-                        !v.language?.toLowerCase().includes("việt") &&
-                        !v.categories?.some((c) => c.toLowerCase().includes("việt"))
+                        !(v.engine === "kokoro" || v.id.startsWith("af_") || v.id.startsWith("am_") || v.id.startsWith("bf_") || v.id.startsWith("bm_")) &&
+                        !(v.language?.toLowerCase().includes("việt") || v.categories?.some((c) => c.toLowerCase().includes("việt")))
                     )
-                    .slice(0, 8)
+                    .slice(0, 6)
                     .map((voice) => {
                       const isSelected = voice.id === selectedVoiceId
                       return (
@@ -378,7 +433,7 @@ export function TextToSpeechWorkspace({
                           type="button"
                           onClick={() => handleSelectVoice(voice.id)}
                           className={cn(
-                            "flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left transition-colors",
+                            "flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-left transition-colors",
                             isSelected
                               ? "bg-primary/10 font-medium text-primary"
                               : "text-foreground hover:bg-muted/60"
@@ -424,6 +479,48 @@ export function TextToSpeechWorkspace({
 
           {/* Preview & Status */}
           <div className="flex items-center gap-2">
+            {/* Dual Model Engine Switcher Pill */}
+            <div className="hidden sm:flex items-center rounded-xl border border-border bg-muted/40 p-0.5">
+              <button
+                type="button"
+                onClick={() => {
+                  onChangeSettings?.({ ...settings, engine: "omnivoice" })
+                  if (currentVoice.engine === "kokoro" || currentVoice.id.startsWith("af_") || currentVoice.id.startsWith("am_") || currentVoice.id.startsWith("bf_") || currentVoice.id.startsWith("bm_")) {
+                    handleSelectVoice("minh-anh")
+                  }
+                }}
+                className={cn(
+                  "flex items-center gap-1 rounded-lg px-2 py-1 text-[10.5px] font-semibold transition-all",
+                  (settings.engine || "omnivoice") === "omnivoice"
+                    ? "bg-card text-foreground shadow-xs border border-border/70"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+                title="OmniVoice FP16: Đa ngôn ngữ, tiếng Việt tự nhiên"
+              >
+                <span className={cn("size-1.5 rounded-full", (settings.engine || "omnivoice") === "omnivoice" ? "bg-emerald-500" : "bg-muted-foreground/40")} />
+                OmniVoice FP16
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  onChangeSettings?.({ ...settings, engine: "kokoro" })
+                  if (currentVoice.id === "minh-anh" || currentVoice.id === "bao-ngoc" || currentVoice.id === "gia-huy") {
+                    handleSelectVoice("af_heart")
+                  }
+                }}
+                className={cn(
+                  "flex items-center gap-1 rounded-lg px-2 py-1 text-[10.5px] font-semibold transition-all",
+                  settings.engine === "kokoro"
+                    ? "bg-card text-foreground shadow-xs border border-border/70"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+                title="Kokoro-82M: Siêu tốc 0.5s, tiếng Anh Hi-Fi cực kỳ tự nhiên"
+              >
+                <span className={cn("size-1.5 rounded-full", settings.engine === "kokoro" ? "bg-cyan-500" : "bg-muted-foreground/40")} />
+                Kokoro-82M ⚡
+              </button>
+            </div>
+
             <Button
               type="button"
               variant="outline"
