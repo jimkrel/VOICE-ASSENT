@@ -354,30 +354,26 @@ def normalize_script(text, lang="English"):
     return t
 
 
-def split_smart_sentences(text, max_len=180):
+def split_smart_sentences(text, max_len=260):
     text = text.strip()
     paras = [p.strip() for p in text.split('\n') if p.strip()]
     chunks = []
     for p in paras:
         raw_sents = re.split(r'(?<=[.!?])\s+', p)
+        buf = ""
         for s in raw_sents:
             s = s.strip()
             if not s:
                 continue
-            if len(s) <= max_len:
-                chunks.append(s)
+            if not buf:
+                buf = s
+            elif len(buf) + len(s) + 1 <= max_len:
+                buf = f"{buf} {s}"
             else:
-                clauses = re.split(r'(?<=[,;])\s+', s)
-                buf = ""
-                for c in clauses:
-                    if len(buf) + len(c) + 1 <= max_len:
-                        buf = f"{buf} {c}".strip()
-                    else:
-                        if buf:
-                            chunks.append(buf)
-                        buf = c
-                if buf:
-                    chunks.append(buf)
+                chunks.append(buf)
+                buf = s
+        if buf:
+            chunks.append(buf)
     return chunks if chunks else [text]
 
 

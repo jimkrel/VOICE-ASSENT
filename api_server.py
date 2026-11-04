@@ -180,7 +180,7 @@ BASE_CATALOG = [
         "gender": "Nữ",
         "language": "English (US)",
         "description": "Trong trẻo, ngọt ngào, tươi sáng",
-        "sampleText": "Deep inside the Black Forest, investigators discovered an abandoned radio tower.",
+        "sampleText": "Deep inside the Black Forest, investigators discovered an abandoned radio tower broadcasting an unbroken seven-digit code.",
         "categories": ["US English", "Nữ (Female)"],
         "source": "ElevenLabs Original",
         "tone": "aqua",
