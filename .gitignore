@@ -1,0 +1,67 @@
+# Environments & Virtualenv
+venv/
+env/
+.venv/
+ENV/
+
+# Model Caches & Large Stores
+hf_cache/
+.pnpm-store/
+cache/
+temp/
+outputs/
+extracted_ui_design/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+ui_v2/node_modules/
+ui_v2/.next/
+ui_v2/.pnpm-store/
+
+# Local backup & scratch files
+*.backup*.py
+studio_app_backup.py
+page.html
+studio_mockup*.html
+test_clone.wav
+
+# Screenshots
+*.png
+!ui_v2/public/*.png
+*.jpg
+*.jpeg
+
+# Secrets & Local Configs
+.env
+.env.local
+.env.*.local
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini

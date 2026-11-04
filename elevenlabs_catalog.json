@@ -1,0 +1,189 @@
+{
+  "Roger — ElevenLabs (American Male • 🎙 Podcast & Conversational)": {
+    "audio": "E:\\VoiceAI\\presets\\eleven_roger.wav",
+    "text": "It is not so important to know everything as to appreciate what we learn.",
+    "desc": "US Nam • Tự nhiên, phóng khoáng, phong độ • Podcast, Vlogs",
+    "gender": "male",
+    "accent": "American",
+    "genre": "🎙 Podcast & Conversational",
+    "lang_category": "en",
+    "type": "elevenlabs",
+    "preset": true
+  },
+  "Sarah — ElevenLabs (American Female • 📺 News & Television)": {
+    "audio": "E:\\VoiceAI\\presets\\eleven_sarah.wav",
+    "text": "The years teach much which the days never know.",
+    "desc": "US Nữ • Chững chạc, điềm tĩnh, chuyên nghiệp • Bản tin, TV, Đánh giá",
+    "gender": "female",
+    "accent": "American",
+    "genre": "📺 News & Television",
+    "lang_category": "en",
+    "type": "elevenlabs",
+    "preset": true
+  },
+  "Laura — ElevenLabs (American Female • 🔥 Pop Culture & Reaction)": {
+    "audio": "E:\\VoiceAI\\presets\\eleven_laura.wav",
+    "text": "Our distrust is very expensive.",
+    "desc": "US Nữ • Cá tính, sắc sảo, năng động • Reaction, Pop Culture",
+    "gender": "female",
+    "accent": "American",
+    "genre": "🔥 Pop Culture & Reaction",
+    "lang_category": "en",
+    "type": "elevenlabs",
+    "preset": true
+  },
+  "George — ElevenLabs (British Male • 📖 British Storyteller)": {
+    "audio": "E:\\VoiceAI\\presets\\eleven_george.wav",
+    "text": "God has given you one face and you make yourself another.",
+    "desc": "UK Nam • Trầm ấm, quý phái, lôi cuốn • Kể chuyện, Phim tài liệu",
+    "gender": "male",
+    "accent": "British",
+    "genre": "📖 British Storyteller",
+    "lang_category": "en",
+    "type": "elevenlabs",
+    "preset": true
+  },
+  "Callum — ElevenLabs (American Male • 🎭 Character & Animation)": {
+    "audio": "E:\\VoiceAI\\presets\\eleven_callum.wav",
+    "text": "Life without love is like a tree without blossoms or fruit.",
+    "desc": "US Nam • Giọng khàn nhân vật, kịch tính • Hoạt hình, Phim",
+    "gender": "male",
+    "accent": "American",
+    "genre": "🎭 Character & Animation",
+    "lang_category": "en",
+    "type": "elevenlabs",
+    "preset": true
+  },
+  "Alice — ElevenLabs (British Female • 🔬 Science & Academic)": {
+    "audio": "E:\\VoiceAI\\presets\\eleven_alice.wav",
+    "text": "Just trust yourself, then you will know how to live.",
+    "desc": "UK Nữ • Chuẩn giọng Anh học thuật, sư phạm • Khoa học, E-learning",
+    "gender": "female",
+    "accent": "British",
+    "genre": "🔬 Science & Academic",
+    "lang_category": "en",
+    "type": "elevenlabs",
+    "preset": true
+  },
+  "Matilda — ElevenLabs (American Female • 💡 Explainer & How-To)": {
+    "audio": "E:\\VoiceAI\\presets\\eleven_matilda.wav",
+    "text": "Ideas are the beginning points of all fortunes.",
+    "desc": "US Nữ • Tươi sáng, rành mạch, dễ hiểu • Hướng dẫn, Đời sống",
+    "gender": "female",
+    "accent": "American",
+    "genre": "💡 Explainer & How-To",
+    "lang_category": "en",
+    "type": "elevenlabs",
+    "preset": true
+  },
+  "Will — ElevenLabs (American Male • 🎮 Chill & Gaming)": {
+    "audio": "E:\\VoiceAI\\presets\\eleven_will.wav",
+    "text": "We make our own fortunes and we call them fate.",
+    "desc": "US Nam • Thư thái, gần gũi, trẻ trung • Gaming, Chill Story",
+    "gender": "male",
+    "accent": "American",
+    "genre": "🎮 Chill & Gaming",
+    "lang_category": "en",
+    "type": "elevenlabs",
+    "preset": true
+  },
+  "Jessica — ElevenLabs (American Female • ✨ Vlog & Lifestyle)": {
+    "audio": "E:\\VoiceAI\\presets\\eleven_jessica.wav",
+    "text": "If you spend your whole life waiting for the storm, you'll never enjoy the sunshine.",
+    "desc": "US Nữ • Trẻ trung, ngọt ngào, tươi vui • Lifestyle, Vlogs, Shorts",
+    "gender": "female",
+    "accent": "American",
+    "genre": "✨ Vlog & Lifestyle",
+    "lang_category": "en",
+    "type": "elevenlabs",
+    "preset": true
+  },
+  "Eric — ElevenLabs (American Male • 💼 Corporate & Review)": {
+    "audio": "E:\\VoiceAI\\presets\\eleven_eric.wav",
+    "text": "Gratitude is riches, complained is poverty.",
+    "desc": "US Nam • Lịch lãm, đáng tin cậy • Tài chính, Doanh nghiệp",
+    "gender": "male",
+    "accent": "American",
+    "genre": "💼 Corporate & Review",
+    "lang_category": "en",
+    "type": "elevenlabs",
+    "preset": true
+  },
+  "Bella — ElevenLabs (American Female • 📖 Audiobook & Narration)": {
+    "audio": "E:\\VoiceAI\\presets\\eleven_bella.wav",
+    "text": "In the theater of life, we are all actors sharing the same scene.",
+    "desc": "US Nữ • Dịu dàng, chuẩn phát thanh • Đọc truyện, Sách nói",
+    "gender": "female",
+    "accent": "American",
+    "genre": "📖 Audiobook & Narration",
+    "lang_category": "en",
+    "type": "elevenlabs",
+    "preset": true
+  },
+  "Brian — ElevenLabs (American Male • 🎬 Documentary & Essay)": {
+    "audio": "E:\\VoiceAI\\presets\\eleven_brian.wav",
+    "text": "The thing always happens that you really believe in, and the belief in a thing makes it happen.",
+    "desc": "US Nam • Trầm ấm, truyền cảm sâu lắng • Video Essay, Phim tài liệu",
+    "gender": "male",
+    "accent": "American",
+    "genre": "🎬 Documentary & Essay",
+    "lang_category": "en",
+    "type": "elevenlabs",
+    "preset": true
+  },
+  "Daniel — ElevenLabs (British Male • 🎙 Formal News Anchor)": {
+    "audio": "E:\\VoiceAI\\presets\\eleven_daniel.wav",
+    "text": "The world is round, and the place which may seem like the end may also be the beginning.",
+    "desc": "UK Nam • Chuẩn đài BBC, trang trọng, quyền uy • Thời sự, Phân tích",
+    "gender": "male",
+    "accent": "British",
+    "genre": "🎙 Formal News Anchor",
+    "lang_category": "en",
+    "type": "elevenlabs",
+    "preset": true
+  },
+  "Lily — ElevenLabs (British Female • 🎭 Drama & Literature)": {
+    "audio": "E:\\VoiceAI\\presets\\eleven_lily.wav",
+    "text": "I have never been hurt by anything I didn't say.",
+    "desc": "UK Nữ • Nhung mượt diễn xuất, giàu cảm xúc • Kịch nghệ, Văn học",
+    "gender": "female",
+    "accent": "British",
+    "genre": "🎭 Drama & Literature",
+    "lang_category": "en",
+    "type": "elevenlabs",
+    "preset": true
+  },
+  "Adam — ElevenLabs (American Male • ⚡ Shorts & Hook)": {
+    "audio": "E:\\VoiceAI\\presets\\eleven_adam.wav",
+    "text": "Our distrust is very expensive.",
+    "desc": "US Nam • Đanh thép, quyền lực, nhịp dồn dập • Shorts, Tech Review",
+    "gender": "male",
+    "accent": "American",
+    "genre": "⚡ Shorts & Hook",
+    "lang_category": "en",
+    "type": "elevenlabs",
+    "preset": true
+  },
+  "Bill — ElevenLabs (American Male • 📜 Old Sage & History)": {
+    "audio": "E:\\VoiceAI\\presets\\eleven_bill.wav",
+    "text": "As we are liberated from our own fear, our presence automatically liberates others.",
+    "desc": "US Nam • Lão thành thông thái, uyên bác • Lịch sử, Sách kinh điển",
+    "gender": "male",
+    "accent": "American",
+    "genre": "📜 Old Sage & History",
+    "lang_category": "en",
+    "type": "elevenlabs",
+    "preset": true
+  },
+  "Hope — ElevenLabs (American Female • ✨ Upbeat & Clear)": {
+    "audio": "E:\\VoiceAI\\presets\\eleven_hope.wav",
+    "text": "Deep inside the Black Forest, investigators discovered an abandoned radio tower broadcasting an unbroken seven-digit code.",
+    "desc": "US Nữ • Trong trẻo, ngọt ngào, lôi cuốn, tươi sáng • Social Media, TikTok, Reels, Commercial",
+    "gender": "female",
+    "accent": "American",
+    "genre": "✨ Upbeat & Clear",
+    "lang_category": "en",
+    "type": "elevenlabs",
+    "preset": true
+  }
+}
