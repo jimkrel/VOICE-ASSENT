@@ -160,9 +160,9 @@ def voice_choices():
 LANG_MAP = {"English": "English", "Tiếng Việt": "Vietnamese", "Tự động": None}
 
 MODEL_STEPS = {
-    "Eleven v4 (Turbo)": {"steps": 18, "cfg": 1.95, "pos": 0.85},
-    "Eleven v3 (Biểu cảm)": {"steps": 18, "cfg": 2.00, "pos": 0.95},
-    "Eleven Multilingual v2 (Chuẩn)": {"steps": 22, "cfg": 1.90, "pos": 0.80},
+    "OmniVoice Cân Bằng (Chuẩn 20 bước)": {"steps": 20, "cfg": 2.0, "pos": 5.0},
+    "OmniVoice Tốc Độ Cao (Nhanh 14 bước)": {"steps": 14, "cfg": 1.9, "pos": 5.0},
+    "OmniVoice Chi Tiết Cao (Kỹ 28 bước)": {"steps": 28, "cfg": 2.05, "pos": 5.0},
 }
 
 
@@ -755,24 +755,43 @@ def chunk_text(text, max_len=180):
 # ------------------------------------------------------------------
 # Xử lý sinh âm thanh (Core Inference Pipeline)
 # ------------------------------------------------------------------
+VOICE_PROMPT_CACHE = {}
+
+def get_cached_voice_prompt(ref_audio, ref_text):
+    if not ref_audio:
+        return None
+    key = (ref_audio, ref_text or "")
+    if key not in VOICE_PROMPT_CACHE:
+        try:
+            VOICE_PROMPT_CACHE[key] = model.create_voice_clone_prompt(
+                ref_audio=ref_audio,
+                ref_text=ref_text,
+                preprocess_prompt=True,
+            )
+        except Exception as e:
+            print("Warning creating VoiceClonePrompt:", e)
+            return None
+    return VOICE_PROMPT_CACHE.get(key)
+
+
 def _run_single(text, lang, speed, stability, similarity, style_exag, model_choice, denoise, emotion="calm", **voice):
     m = MODEL_STEPS.get(model_choice, list(MODEL_STEPS.values())[0])
-    steps = m.get("steps", 14)
-    base_cfg = m.get("cfg", 1.95)
-    base_pos = m.get("pos", 0.85)
+    steps = m.get("steps", 20)
+    base_cfg = m.get("cfg", 2.0)
+    base_pos = m.get("pos", 5.0)
 
     emo = (emotion or "calm").lower()
     emo_prof = EMOTION_PROFILES.get(emo, EMOTION_PROFILES["calm"])
 
-    # Hiệu chỉnh CFG & Position Temperature kết hợp Slider + Thẻ cảm xúc ElevenLabs
-    cfg = (base_cfg * (0.82 + 0.25 * float(similarity)) + float(style_exag) * 0.35) * emo_prof["cfg_mult"]
-    cfg = float(np.clip(cfg, 1.55, 2.35))
+    # Tính toán Guidance Scale & Position Temperature chuẩn OmniVoice
+    cfg = float(base_cfg * (0.85 + 0.30 * float(similarity))) * emo_prof["cfg_mult"]
+    cfg = float(np.clip(cfg, 1.5, 2.5))
 
-    pos_temp = (base_pos * (1.25 - 0.55 * float(stability)) + float(style_exag) * 0.45) * emo_prof["pos_mult"]
-    pos_temp = float(np.clip(pos_temp, 0.50, 1.45))
+    pos_temp = float(base_pos * (0.80 + 0.40 * float(stability))) * emo_prof["pos_mult"]
+    pos_temp = float(np.clip(pos_temp, 3.0, 7.0))
 
     eff_speed = float(speed) * emo_prof["speed_mult"]
-    eff_speed = float(np.clip(eff_speed, 0.65, 1.50))
+    eff_speed = float(np.clip(eff_speed, 0.70, 1.40))
 
     kw = dict(
         text=text,
@@ -784,14 +803,26 @@ def _run_single(text, lang, speed, stability, similarity, style_exag, model_choi
         guidance_scale=cfg,
         position_temperature=pos_temp,
     )
-    kw.update({k: v for k, v in voice.items() if v})
+
+    # Sử dụng Voice Clone Prompt đã được tiền xử lý & cache
+    ref_audio = voice.get("ref_audio")
+    ref_text = voice.get("ref_text")
+    if ref_audio:
+        v_prompt = get_cached_voice_prompt(ref_audio, ref_text)
+        if v_prompt is not None:
+            kw["voice_clone_prompt"] = v_prompt
+        else:
+            kw["ref_audio"] = ref_audio
+            if ref_text:
+                kw["ref_text"] = ref_text
+
     with torch.inference_mode():
         audio = model.generate(**kw)[0]
     if isinstance(audio, torch.Tensor):
         audio = audio.detach().cpu().numpy()
     audio = np.asarray(audio, dtype=np.float32).squeeze()
 
-    # Áp dụng Emotion DSP (định hình âm vực, lụa/thì thầm/kịch tính)
+    # Áp dụng Emotion DSP
     audio = apply_emotion_dsp(audio, sr=model.sampling_rate, emotion=emo)
     return audio, steps
 

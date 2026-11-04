@@ -287,7 +287,7 @@ export function TextToSpeechWorkspace({
             Biến kịch bản thành giọng đọc
           </h2>
           <p className="mt-1 max-w-[640px] text-[12px] leading-5 text-muted-foreground">
-            Dán nội dung, chọn giọng đọc tiếng Việt hoặc tiếng Anh và xuất âm thanh chuẩn studio 24 kHz.
+            Dán nội dung, chọn giọng đọc tiếng Việt hoặc tiếng Anh và xuất âm thanh studio 24 kHz trên GPU nội bộ OmniVoice FP16.
           </p>
         </header>
 

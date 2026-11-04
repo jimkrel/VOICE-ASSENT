@@ -35,7 +35,7 @@ STUDIO_TELEMETRY = {
     "waveform": [],
     "logs": [
         {"time": "00:00.0", "message": "Đã nạp OmniVoice FP16 trên NVIDIA GeForce GTX 1650 (CUDA:0)"},
-        {"time": "00:00.1", "message": "Bộ lọc 5-Stage ElevenLabs Mastering (-14 LUFS) & Spatial DSP sẵn sàng"},
+        {"time": "00:00.1", "message": "Bộ lọc Studio Mastering (-14 LUFS) & Spatial DSP sẵn sàng"},
     ],
 }
 
@@ -182,7 +182,7 @@ BASE_CATALOG = [
         "description": "Trong trẻo, ngọt ngào, tươi sáng",
         "sampleText": "Deep inside the Black Forest, investigators discovered an abandoned radio tower broadcasting an unbroken seven-digit code.",
         "categories": ["US English", "Nữ (Female)"],
-        "source": "ElevenLabs Original",
+        "source": "Mẫu Studio",
         "tone": "aqua",
         "audioPath": os.path.join(core.PRESET_DIR, "eleven_hope.wav"),
     },
@@ -308,7 +308,7 @@ def get_full_catalog():
                     "description": meta.get("desc", ""),
                     "sampleText": meta.get("text", ""),
                     "categories": cats,
-                    "source": "ElevenLabs Original",
+                    "source": "Mẫu Studio",
                     "tone": TONES[idx % len(TONES)],
                     "audioPath": meta.get("audio", ""),
                 })
@@ -434,7 +434,7 @@ def api_tts(req: TTSRequest):
     sr = core.model.sampling_rate
     audio_segments = []
     emotions_used = []
-    model_choice = "Eleven v4 (Turbo)"
+    model_choice = "OmniVoice Cân Bằng (Chuẩn 20 bước)"
     total_steps = core.MODEL_STEPS[model_choice]["steps"]
 
     for i, c in enumerate(chunks):

@@ -264,7 +264,7 @@ export function VoiceLibraryWorkspace({
               Kho giọng đọc
             </h2>
             <p className="mt-1 text-[12px] leading-5 text-muted-foreground">
-              Khám phá {voices.length} giọng đọc chuẩn phòng thu (Tiếng Việt &amp; ElevenLabs Originals) hoặc quản lý giọng tự tạo.
+              Khám phá {voices.length} giọng đọc mẫu phòng thu (Tiếng Việt &amp; Quốc tế) hoặc quản lý giọng tự tạo.
             </p>
           </div>
           <Link
