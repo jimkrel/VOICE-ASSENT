@@ -5,9 +5,12 @@ os.environ['HF_HOME'] = r'E:\VoiceAI\hf_cache'
 os.environ['TORCH_HOME'] = r'E:\VoiceAI\torch_cache'
 os.environ['TEMP'] = r'E:\VoiceAI\temp'
 os.environ['TMP'] = r'E:\VoiceAI\temp'
+os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'max_split_size_mb:128'
 
 import numpy as np
 import torch
+if torch.cuda.is_available():
+    torch.backends.cudnn.benchmark = True
 import soundfile as sf
 from scipy import signal
 import gradio as gr
@@ -160,6 +163,7 @@ def voice_choices():
 LANG_MAP = {"English": "English", "Tiếng Việt": "Vietnamese", "Tự động": None}
 
 MODEL_STEPS = {
+    "OmniVoice Siêu Tốc (12 bước)": {"steps": 12, "cfg": 1.9, "pos": 5.0},
     "OmniVoice Cân Bằng (Chuẩn 20 bước)": {"steps": 20, "cfg": 2.0, "pos": 5.0},
     "OmniVoice Tốc Độ Cao (Nhanh 14 bước)": {"steps": 14, "cfg": 1.9, "pos": 5.0},
     "OmniVoice Chi Tiết Cao (Kỹ 28 bước)": {"steps": 28, "cfg": 2.05, "pos": 5.0},

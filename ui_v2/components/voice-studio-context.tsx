@@ -151,10 +151,22 @@ export function VoiceStudioProvider({ children }: { children: ReactNode }) {
     fetchHistory()
     fetchTelemetry()
 
-    // Poll live hardware metrics every 2.5s
-    const timer = setInterval(() => {
-      fetchTelemetry()
-    }, 2500)
+    // Smart Hardware Polling: Pauses when tab is inactive, relaxed interval (3.5s) to keep PC cool & smooth
+    let isFetching = false
+    const pollFn = async () => {
+      if (typeof document !== "undefined" && document.hidden) {
+        return // Tab in background -> zero CPU overhead
+      }
+      if (isFetching) return
+      isFetching = true
+      try {
+        await fetchTelemetry()
+      } finally {
+        isFetching = false
+      }
+    }
+
+    const timer = setInterval(pollFn, 3500)
     return () => clearInterval(timer)
   }, [fetchVoices, fetchHistory, fetchTelemetry])
 

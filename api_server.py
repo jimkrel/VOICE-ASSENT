@@ -12,9 +12,12 @@ os.environ['HF_HOME'] = r'E:\VoiceAI\hf_cache'
 os.environ['TORCH_HOME'] = r'E:\VoiceAI\torch_cache'
 os.environ['TEMP'] = r'E:\VoiceAI\temp'
 os.environ['TMP'] = r'E:\VoiceAI\temp'
+os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'max_split_size_mb:128'
 
 import numpy as np
 import torch
+if torch.cuda.is_available():
+    torch.backends.cudnn.benchmark = True
 import soundfile as sf
 import studio_app as core
 import kokoro_engine
@@ -96,7 +99,17 @@ def finish_studio_job(audio: np.ndarray, sr: int, audio_url: str, filename: str,
     return bars
 
 
+_HW_CACHE = {
+    "data": None,
+    "last_check": 0.0,
+}
+
 def query_real_hardware():
+    now = time.time()
+    # Cache for 3.0s to eliminate repetitive nvidia-smi process spawns
+    if _HW_CACHE["data"] is not None and (now - _HW_CACHE["last_check"]) < 3.0:
+        return _HW_CACHE["data"]
+
     cpu_pct = round(psutil.cpu_percent(interval=None))
     vm = psutil.virtual_memory()
     ram_pct = round(vm.percent)
@@ -107,10 +120,11 @@ def query_real_hardware():
     vram_used_mb = 0
     vram_total_mb = 4096
     gpu_temp = 45
+
     try:
         out = subprocess.check_output(
             ["nvidia-smi", "--query-gpu=utilization.gpu,memory.used,memory.total,temperature.gpu", "--format=csv,noheader,nounits"],
-            timeout=1.5,
+            timeout=1.0,
             text=True,
         ).strip()
         parts = [p.strip() for p in out.split(",")]
@@ -123,7 +137,7 @@ def query_real_hardware():
         if torch.cuda.is_available():
             vram_used_mb = int(torch.cuda.memory_allocated(0) / (1024 ** 2))
 
-    return {
+    data = {
         "cpu": max(1, min(100, cpu_pct)),
         "gpu": max(0, min(100, gpu_util)),
         "gpuTemp": gpu_temp,
@@ -135,6 +149,9 @@ def query_real_hardware():
         "vramPct": max(1, min(100, round((vram_used_mb / max(1, vram_total_mb)) * 100))),
         "gpuName": "NVIDIA GeForce GTX 1650",
     }
+    _HW_CACHE["data"] = data
+    _HW_CACHE["last_check"] = now
+    return data
 
 app = FastAPI(title="Thành Âm Studio API V2")
 
@@ -479,6 +496,8 @@ def api_tts(req: TTSRequest):
         full_audio = core.apply_audio_effects(full_audio, sr=sr, distance=fx_dist, env_filter=fx_env)
 
         out_path = core.save_output(full_audio, "tts")
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
         fname = os.path.basename(out_path)
         dur = float(len(full_audio) / sr)
         elapsed = float(time.time() - t0)
@@ -533,7 +552,7 @@ def api_tts(req: TTSRequest):
     sr = core.model.sampling_rate
     audio_segments = []
     emotions_used = []
-    model_choice = "OmniVoice Cân Bằng (Chuẩn 20 bước)"
+    model_choice = "OmniVoice Siêu Tốc (12 bước)"
     total_steps = core.MODEL_STEPS[model_choice]["steps"]
 
     for i, c in enumerate(chunks):

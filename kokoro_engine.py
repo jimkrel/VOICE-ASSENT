@@ -219,23 +219,26 @@ def generate_kokoro(
     pipeline = get_pipeline(lang_code)
 
     t0 = time.time()
-    generator = pipeline(text, voice=voice_name, speed=speed, split_pattern=r"\n+")
-
     chunks = []
     chunk_idx = 0
-    for result in generator:
-        if result is not None and getattr(result, "audio", None) is not None:
-            audio_tensor = result.audio
-            if isinstance(audio_tensor, torch.Tensor):
-                audio_np = audio_tensor.detach().cpu().numpy()
-            else:
-                audio_np = np.asarray(audio_tensor)
-            if audio_np.ndim > 1:
-                audio_np = audio_np.squeeze()
-            chunks.append(audio_np)
-            chunk_idx += 1
-            if callback:
-                callback(chunk_idx, getattr(result, "graphemes", ""))
+    with torch.inference_mode():
+        generator = pipeline(text, voice=voice_name, speed=speed, split_pattern=r"\n+")
+        for result in generator:
+            if result is not None and getattr(result, "audio", None) is not None:
+                audio_tensor = result.audio
+                if isinstance(audio_tensor, torch.Tensor):
+                    audio_np = audio_tensor.detach().cpu().numpy()
+                else:
+                    audio_np = np.asarray(audio_tensor)
+                if audio_np.ndim > 1:
+                    audio_np = audio_np.squeeze()
+                chunks.append(audio_np)
+                chunk_idx += 1
+                if callback:
+                    callback(chunk_idx, getattr(result, "graphemes", ""))
+
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
 
     if not chunks:
         # Fallback 0.5s silence
